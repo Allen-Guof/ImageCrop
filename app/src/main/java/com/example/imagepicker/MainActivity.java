@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private Uri imageUri;
     private String imgPath;
     private Uri outputFileUri;
+    private File mPickFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
 //                    return;
 //                }
                 outputFileUri = getFileUri("Image_crop.jpg");
-                cropImage(MainActivity.this, imageUri, outputFileUri,
+                Uri pickUri = FileProvider.getUriForFile(MainActivity.this, "com.example.imagepicker.fileProvider", mPickFile);
+                cropImage(MainActivity.this, pickUri, outputFileUri,
                         RES_CROP, 1, 1, 300, 300);
             }
         });
@@ -139,20 +141,17 @@ public class MainActivity extends AppCompatActivity {
         activity.startActivityForResult(chooser, requestCode);
     }
 
-
-
     private final Intent getPickImageIntent() {
+        // pick iamge
         Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//        Intent pickIntent=new Intent("android.intent.action.GET_CONTENT");
-        //把所有照片显示出来
-        pickIntent.setType("image/*");
-
+        //take a photo
         Intent takePhotoIntent = new Intent("android.media.action.IMAGE_CAPTURE");
         takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, setImageUri("Image_Tmp.jpg"));
         return takePhotoIntent;
     }
 
     private final Uri setImageUri(String imgName) {
+//        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
         File folder = new File(String.valueOf(this.getExternalFilesDir(Environment.DIRECTORY_DCIM)));
         folder.mkdirs();
         File file = new File(folder, imgName);
@@ -170,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private final Uri getFileUri(String imgName) {
+//        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
         File folder = new File(String.valueOf(this.getExternalFilesDir(Environment.DIRECTORY_DCIM)));
         folder.mkdirs();
         File file = new File(folder, imgName);
@@ -214,23 +214,20 @@ public class MainActivity extends AppCompatActivity {
             imageUri = data.getData();
         }
 //                File file = new File(imageUri.);
+
         String path = imageUri.getPath();
         Log.i(TAG, "onActivityResult image path: " + path);
+        mPickFile = getFile(MainActivity.this, imageUri);
         Glide.with(MainActivity.this)
                 .asBitmap()
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(true)
-                .load(getFile(MainActivity.this, imageUri))
+                .load(mPickFile)
                 .into(binding.image);
 //        binding.image.setImageURI(imageUri);
     }
 
     private void handleCropIntent(Intent data) throws IOException {
-//        if (data.getData() != null) {
-//            imageUri = data.getData();
-//        }
-//        String path = imageUri.getPath();
-//        Log.i(TAG, "onActivityResult image path: " + path);
         Glide.with(MainActivity.this)
                 .asBitmap()
                 .load(getFile(MainActivity.this, outputFileUri))
@@ -240,9 +237,10 @@ public class MainActivity extends AppCompatActivity {
 //        binding.image.setImageURI(imageUri);
     }
 
-
-
     public static File getFile(Context context, Uri uri) throws IOException {
+//        File folder = new File(String.valueOf(context.getExternalFilesDir(Environment.DIRECTORY_DCIM)));
+//        folder.mkdirs();
+//        File destinationFilename = new File(folder, queryName(context, uri));
         File destinationFilename = new File(context.getFilesDir().getPath() + File.separatorChar + queryName(context, uri));
         try (InputStream ins = context.getContentResolver().openInputStream(uri)) {
             createFileFromStream(ins, destinationFilename);
